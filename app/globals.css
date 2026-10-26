@@ -244,7 +244,7 @@ body {
   height: 1px;
   pointer-events: none;
   background: linear-gradient(90deg, transparent, var(--peek, #cbb894), transparent);
-  opacity: 0.55;
+  opacity: 0.8;
   transition: background 420ms ease;
 }
 
@@ -364,10 +364,10 @@ body {
   overflow: visible;
   stroke: currentColor;
   fill: none;
-  stroke-width: 1.5;
+  stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.85;
+  opacity: 0.9;
   transition: opacity 320ms ease;
 }
 .mood-tile .mood-motif {
@@ -377,7 +377,7 @@ body {
 .mood-chip .mood-motif {
   width: 15px;
   height: 15px;
-  stroke-width: 2.2;
+  stroke-width: 2.4;
   opacity: 1;
 }
 .mood-row:hover .mood-motif,
@@ -472,20 +472,9 @@ body {
     opacity: 0.6;
   }
 }
-@keyframes moodSwapX {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(0.9px);
-  }
-}
-
 .mood-motif .orbit,
 .mood-motif .orbit-rev,
-.mood-motif .pulse,
-.mood-motif .drift {
+.mood-motif .pulse {
   transform-box: view-box;
   transform-origin: 50% 50%;
 }
@@ -512,9 +501,6 @@ body {
 }
 .mood-motif .pulse {
   animation: moodPulse 4.2s ease-in-out infinite;
-}
-.mood-motif .drift {
-  animation: moodSwapX 7s ease-in-out infinite;
 }
 .mood-motif .flicker {
   animation: moodFlicker 6.4s ease-in-out infinite;

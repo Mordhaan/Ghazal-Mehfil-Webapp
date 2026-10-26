@@ -13,58 +13,56 @@ function Motif({ id }: { id: string }) {
     case "3am-melancholy":
       return (
         <svg viewBox="0 0 32 32" className="mood-motif" aria-hidden="true" focusable="false">
-          <path
-            className="solid"
-            opacity="0.5"
-            d="M20.2 7.3a9.7 9.7 0 1 0 0 17.4 12 12 0 0 1 0-17.4z"
-          />
-          <circle className="solid twinkle" cx="9.1" cy="9.3" r="1.15" />
-          <circle className="solid twinkle-late" cx="8.4" cy="21" r="0.75" />
+          <path d="M20 7.4a9.6 9.6 0 1 0 0 17.2 12 12 0 0 1 0-17.2z" />
+          <circle className="solid twinkle" cx="8.7" cy="9.6" r="1.15" />
+          <circle className="solid twinkle-late" cx="10.4" cy="23.4" r="0.7" />
         </svg>
       );
 
     case "tender-romance":
       return (
         <svg viewBox="0 0 32 32" className="mood-motif" aria-hidden="true" focusable="false">
-          <circle className="drift" cx="13" cy="16" r="6.3" opacity="0.8" />
-          <circle cx="19" cy="16" r="6.3" opacity="0.8" />
-          <circle className="solid pulse" cx="16" cy="16" r="1.7" />
+          <path d="M16 25C13.5 23 6 18.1 6 13.1a5.4 5.4 0 0 1 10-2.9 5.4 5.4 0 0 1 10 2.9c0 5-7.5 9.9-10 11.9z" />
+          <circle className="solid pulse" cx="16" cy="15.1" r="1.55" />
         </svg>
       );
 
     case "sufi-transcendence":
       return (
         <svg viewBox="0 0 32 32" className="mood-motif" aria-hidden="true" focusable="false">
-          <circle className="solid" cx="16" cy="16" r="1.8" />
           <g className="orbit">
-            <ellipse cx="16" cy="16" rx="11" ry="4.4" opacity="0.85" />
-            <circle className="solid" cx="27" cy="16" r="1.15" />
+            <ellipse cx="16" cy="16" rx="10.7" ry="4.3" transform="rotate(-28 16 16)" opacity="0.8" />
+            <circle className="solid" cx="26.7" cy="16" r="1.15" transform="rotate(-28 16 16)" />
           </g>
           <g className="orbit-rev">
-            <ellipse cx="16" cy="16" rx="4.4" ry="11" opacity="0.5" strokeDasharray="2 3.6" />
+            <ellipse
+              cx="16"
+              cy="16"
+              rx="10.7"
+              ry="4.3"
+              transform="rotate(58 16 16)"
+              opacity="0.35"
+            />
           </g>
+          <circle className="solid" cx="16" cy="16" r="1.7" />
         </svg>
       );
 
     case "rebellious-philosophical":
       return (
         <svg viewBox="0 0 32 32" className="mood-motif" aria-hidden="true" focusable="false">
-          <path d="M16 6.4 25.4 16l-3.5 3.8" />
-          <path className="flicker" d="M16 25.6 6.6 16l4-4.3" />
-          <circle className="solid drift" cx="22.9" cy="21.9" r="1.05" opacity="0.85" />
+          <path d="M15.4 7.6H9.4a1.8 1.8 0 0 0-1.8 1.8v13.2a1.8 1.8 0 0 0 1.8 1.8h13.2a1.8 1.8 0 0 0 1.8-1.8v-8.4" />
+          <circle className="solid flicker" cx="27.2" cy="10.6" r="1.05" />
         </svg>
       );
 
     case "lofi-rain-chill":
       return (
         <svg viewBox="0 0 32 32" className="mood-motif" aria-hidden="true" focusable="false">
-          <path className="rain" d="M11 8.4l-1.9 4.4" />
-          <path className="rain rain-2" d="M17 6.6l-1.9 4.4" />
-          <path className="rain rain-3" d="M23 8.6l-1.9 4.4" />
-          <path
-            d="M7.4 25.4c2.4-1.6 5-1.6 7.4 0 2.4 1.6 5 1.6 7.4 0"
-            opacity="0.45"
-          />
+          <path className="rain" d="M11 7.6 9 13.1" />
+          <path className="rain rain-2" d="M17.2 6.2 15.2 11.7" />
+          <path className="rain rain-3" d="M23.4 8 21.4 13.5" />
+          <path d="M7.6 25.4c2.2-1.5 4.4-1.5 6.6 0" opacity="0.45" />
         </svg>
       );
 
@@ -255,7 +253,9 @@ export default function MoodPicker({
               <div className="mood-foot">
                 <span className="mood-foot-dot" aria-hidden="true" />
                 <span className="truncate text-[8.5px] uppercase tracking-[0.16em] text-white/35">
-                  {peek?.tags?.length ? peek.tags.join(" · ") : "a mehfil for the quiet hours"}
+                  {peek?.tags?.length
+                    ? peek.tags.slice(0, 3).join(" · ")
+                    : "a mehfil for the quiet hours"}
                 </span>
               </div>
             </div>
