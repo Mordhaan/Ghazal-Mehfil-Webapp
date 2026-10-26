@@ -1,0 +1,52 @@
+[
+  {
+    "id": "3am-melancholy",
+    "name": "3 AM Melancholy",
+    "urdu_name": "شب کا اندھیرا و تنہائی",
+    "hindi_name": "देर रात की तन्हाई",
+    "vibe_description": "For overthinking, unrequited ache, and midnight quietude",
+    "color": "#3B82F6",
+    "bg_gradient": "linear-gradient(135deg, #090e1a 0%, #030712 100%)",
+    "tags": ["Heartbreak", "Gham", "Hijr", "Tanhai", "Rain"]
+  },
+  {
+    "id": "tender-romance",
+    "name": "Tender Romance",
+    "urdu_name": "عشق و محبت",
+    "hindi_name": "इश्क़ और नज़ाकत",
+    "vibe_description": "Butterflies, gentle warmth, stolen glances, and soulful adoration",
+    "color": "#EC4899",
+    "bg_gradient": "linear-gradient(135deg, #1c0a18 0%, #050206 100%)",
+    "tags": ["Ishq", "Mohabbat", "Wasl", "Beauty", "Soft"]
+  },
+  {
+    "id": "sufi-transcendence",
+    "name": "Sufi Transcendence",
+    "urdu_name": "تصوف و سرور",
+    "hindi_name": "सूफ़ी रूहानियत",
+    "vibe_description": "Cosmic surrender, ego dissolution, and spiritual ecstasy",
+    "color": "#EAB308",
+    "bg_gradient": "linear-gradient(135deg, #1a1608 0%, #050402 100%)",
+    "tags": ["Tasawwuf", "Khudi", "Rumi", "Divine", "Ecstasy"]
+  },
+  {
+    "id": "rebellious-philosophical",
+    "name": "Raw & Philosophical",
+    "urdu_name": "رند و فلسفہ",
+    "hindi_name": "फ़लसफ़ा और बग़ावत",
+    "vibe_description": "Questioning existence, defiance against orthodoxy, and bitter irony",
+    "color": "#8B5CF6",
+    "bg_gradient": "linear-gradient(135deg, #130a1e 0%, #030206 100%)",
+    "tags": ["Falsafa", "Zahid", "Jaun", "Ghalib", "Existential"]
+  },
+  {
+    "id": "lofi-rain-chill",
+    "name": "Lo-Fi Monsoon",
+    "urdu_name": "بارش اور دھیمی لہریں",
+    "hindi_name": "बारिश और लो-फ़ाई सुकून",
+    "vibe_description": "Slow tempo, warm vinyl crackle, drops on windowpanes, and tea",
+    "color": "#10B981",
+    "bg_gradient": "linear-gradient(135deg, #061712 0%, #010604 100%)",
+    "tags": ["Lo-Fi", "Rain", "Focus", "Ambient", "Acoustic"]
+  }
+]

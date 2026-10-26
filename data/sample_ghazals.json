@@ -1,0 +1,164 @@
+[
+  {
+    "id": "ranjish-hi-sahi",
+    "title_roman": "Ranjish Hi Sahi",
+    "title_urdu": "رنجش ہی سہی",
+    "title_hindi": "रंजिश ही सही",
+    "poet": {
+      "id": "ahmed-faraz",
+      "name_roman": "Ahmed Faraz",
+      "name_urdu": "احمد فراز",
+      "name_hindi": "अहमद फ़राज़",
+      "era": "Modern Romantic"
+    },
+    "singer": {
+      "name": "Mehdi Hassan",
+      "title": "Shahenshah-e-Ghazal"
+    },
+    "mood_id": "3am-melancholy",
+    "audio_url": "https://ia800301.us.archive.org/15/items/MehdiHassanGhazalsCollection/RanjishHiSahi.mp3",
+    "duration_seconds": 380,
+    "bahr": "Khafif",
+    "radif": "aa",
+    "qaafiya": "sahi / dukhane / jalane",
+    "shers": [
+      {
+        "id": "sher-1",
+        "index": 1,
+        "is_matla": true,
+        "is_maqta": false,
+        "start_time": 0,
+        "end_time": 58,
+        "text_urdu": "رنجش ہی سہی دل ہی دکھانے کے لیے آ\nآ پھر سے مجھے چھوڑ کے جانے کے لیے آ",
+        "text_hindi": "रंजिश ही सही दिल ही दुखाने के लिए आ\nआ फिर से मुझे छोड़ के जाने के लिए आ",
+        "text_roman": "Ranjish hi sahi dil hi dukhaane ke liye aa\nAa phir se mujhe chhod ke jaane ke liye aa",
+        "english_meaning": "Even if out of resentment, come to hurt my heart once more; come, even if only to abandon me all over again.",
+        "vocabulary": [
+          {
+            "word": "Ranjish",
+            "urdu": "رنجش",
+            "meaning": "Anguish, resentment, lingering grievance",
+            "pronunciation": "Run-jish"
+          }
+        ]
+      },
+      {
+        "id": "sher-2",
+        "index": 2,
+        "is_matla": false,
+        "is_maqta": false,
+        "start_time": 59,
+        "end_time": 124,
+        "text_urdu": "پہلے سے مراسم نہ سہی پھر بھی کبھی تو\nرسم و رہ دنیا ہی نبھانے کے لیے آ",
+        "text_hindi": "पहले से मरासिम न सही फिर भी कभी तो\nरस्म-ओ-रह-ए-दुनिया ही निभाने के लिए आ",
+        "text_roman": "Pehle se maraasim na sahi phir bhi kabhi to\nRasm-o-rah-e-duniya hi nibhaane ke liye aa",
+        "english_meaning": "Even if the intimacy of old days is gone, at least come sometimes to fulfill the social customs of the world.",
+        "vocabulary": [
+          {
+            "word": "Maraasim",
+            "urdu": "مراسم",
+            "meaning": "Relationships, intimate ties, relations",
+            "pronunciation": "Ma-raa-sim"
+          },
+          {
+            "word": "Rasm-o-rah",
+            "urdu": "رسم و راہ",
+            "meaning": "Social customs, worldly conventions",
+            "pronunciation": "Rasm-o-rah"
+          }
+        ]
+      },
+      {
+        "id": "sher-3",
+        "index": 3,
+        "is_matla": false,
+        "is_maqta": false,
+        "start_time": 125,
+        "end_time": 190,
+        "text_urdu": "کس کس کو بتائیں گے جدائی کا سبب ہم\nتو مجھ سے خفا ہے تو زمانے کے لیے آ",
+        "text_hindi": "किस किस को बताएँगे जुदाई का सबब हम\nतू मुझ से ख़फ़ा है तो ज़माने के लिए आ",
+        "text_roman": "Kis kis ko bataayenge judaai ka sabab hum\nTu mujh se khafa hai to zamaane ke liye aa",
+        "english_meaning": "To how many people will I explain the reason for our parting? Even if you're upset with me, come for the sake of the world.",
+        "vocabulary": [
+          {
+            "word": "Sabab",
+            "urdu": "سبب",
+            "meaning": "Reason, cause",
+            "pronunciation": "Sa-bub"
+          },
+          {
+            "word": "Khafa",
+            "urdu": "خفا",
+            "meaning": "Upset, displeased",
+            "pronunciation": "Kha-faa"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "be-dili-kya-yoon-hi",
+    "title_roman": "Be-dili Kya Yoon Hi Din Guzar Jayenge",
+    "title_urdu": "بے دلی کیا یوں ہی دن گزر جائیں گے",
+    "title_hindi": "बे-दिली क्या यूँ ही दिन गुज़र जाएँगे",
+    "poet": {
+      "id": "jaun-elia",
+      "name_roman": "Jaun Elia",
+      "name_urdu": "جون ایلیا",
+      "name_hindi": "जौन एलिया",
+      "era": "Existential Nihilist"
+    },
+    "singer": {
+      "name": "Lo-Fi Acoustic Recital",
+      "title": "Minimal Studio Voice"
+    },
+    "mood_id": "rebellious-philosophical",
+    "audio_url": "",
+    "duration_seconds": 210,
+    "bahr": "Hazaj",
+    "radif": "jayenge",
+    "qaafiya": "guzar / mar / darr",
+    "shers": [
+      {
+        "id": "sher-1",
+        "index": 1,
+        "is_matla": true,
+        "is_maqta": false,
+        "start_time": 0,
+        "end_time": 45,
+        "text_urdu": "بے دلی کیا یوں ہی دن گزر جائیں گے\nصرف زندہ رہے ہم تو مر جائیں گے",
+        "text_hindi": "बे-दिली क्या यूँ ही दिन गुज़र जाएँगे\nसिर्फ़ ज़िंदा रहे हम तो मर जाएँगे",
+        "text_roman": "Be-dili kya yoon hi din guzar jaayenge\nSirf zinda rahe hum to mar jaayenge",
+        "english_meaning": "O heartlessness, will our days pass by just like this? If we merely stay alive without purpose, we will wither and die.",
+        "vocabulary": [
+          {
+            "word": "Be-dili",
+            "urdu": "بے دلی",
+            "meaning": "Apathy, lack of enthusiasm, gloominess, heartlessness",
+            "pronunciation": "Bay-di-lee"
+          }
+        ]
+      },
+      {
+        "id": "sher-2",
+        "index": 2,
+        "is_matla": false,
+        "is_maqta": false,
+        "start_time": 46,
+        "end_time": 95,
+        "text_urdu": "ہم جو خود کو لیے پھر رہے ہیں یہاں\nکیا زمانے کا کچھ قرض چکائیں گے",
+        "text_hindi": "हम जो ख़ुद को लिए फिर रहे हैं यहाँ\nक्या ज़माने का कुछ क़र्ज़ चुकाएँगे",
+        "text_roman": "Hum jo khud ko liye phir rahe hain yahan\nKya zamaane ka kuchh qarz chukaaenge",
+        "english_meaning": "We who wander aimlessly carrying the heavy burden of ourselves—are we really paying off some debt owed to this world?",
+        "vocabulary": [
+          {
+            "word": "Qarz",
+            "urdu": "قرض",
+            "meaning": "Debt, obligation",
+            "pronunciation": "Qurz"
+          }
+        ]
+      }
+    ]
+  }
+]
