@@ -106,7 +106,11 @@ export default function MoodPicker({
   const close = (refocus = true) => {
     setOpen(false);
     setPeekId(null);
-    if (refocus) triggerRef.current?.focus({ preventScroll: true });
+    // Defer the refocus: moving focus inside the same Enter keydown would let
+    // that keystroke activate the freshly focused trigger and reopen the panel.
+    if (refocus) {
+      requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }));
+    }
   };
 
   // Land keyboard focus on the mood you already live in.
