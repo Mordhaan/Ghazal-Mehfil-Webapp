@@ -1,0 +1,29 @@
+node_modules/
+.next/
+.next.*/
+out/
+*.tsbuildinfo
+
+data/.cache/
+data/tracks.raw.jsonl
+data/ghazals.partial.jsonl
+data/*.backup.json
+__pycache__/
+*.pyc
+.env*
+.DS_Store
+
+# generated media + ASR caches (hundreds of MB)
+data/.audio/
+data/.models/
+data/.asr-models/
+data/models/
+data/align/
+data/timings.v3.json
+
+# local run logs & scratch / debug sessions
+*.log
+.tmp*
+.openclaw/
+.zwork/
+data/tracks.json
