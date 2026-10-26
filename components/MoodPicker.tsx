@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import type { Mood } from "@/lib/types";
 
 /**
- * A 32×32 sketch of each mood's weather — crescent, orbit, rain, a broken
- * diamond. Abstract on purpose: at 24px it should read as atmosphere, not
+ * A 32×32 sketch of each mood's weather — crescent, heart, orbit, a broken
+ * frame, rain. Abstract on purpose: at 24px it should read as atmosphere, not
  * as an icon set.
  */
 function Motif({ id }: { id: string }) {
@@ -103,30 +103,45 @@ export default function MoodPicker({
     rows[Math.min(rows.length - 1, Math.max(0, i))]?.focus({ preventScroll: true });
   };
 
+  const move = (from: number, delta: number) => {
+    const n = moods.length;
+    if (!n) return;
+    focusAt((((from + delta) % n) + n) % n);
+  };
+
   const close = (refocus = true) => {
     setOpen(false);
     setPeekId(null);
     // Defer the refocus: moving focus inside the same Enter keydown would let
     // that keystroke activate the freshly focused trigger and reopen the panel.
     if (refocus) {
-      requestAnimationFrame(() => triggerRef.current?.focus({ preventScroll: true }));
+      setTimeout(() => triggerRef.current?.focus({ preventScroll: true }), 0);
     }
   };
 
   // Land keyboard focus on the mood you already live in.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return;
-    const raf = requestAnimationFrame(() => focusAt(activeIndex));
-    return () => cancelAnimationFrame(raf);
+    focusAt(activeIndex);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onKeyDown={(e) => {
+        // Space belongs to the focused control here, not to the global play
+        // shortcut (the window listener would otherwise preventDefault it).
+        if (e.key === " " || e.code === "Space") e.stopPropagation();
+      }}
+    >
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setOpen((v) => !v);
+          setPeekId(null);
+        }}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown" || e.key === "ArrowUp") {
             e.preventDefault();
@@ -137,7 +152,7 @@ export default function MoodPicker({
         aria-expanded={open}
         aria-controls="mood-listbox"
         aria-label={`Mood: ${active?.name ?? "choose"}`}
-        className="glass flex items-center gap-2 rounded-full py-1.5 pl-2 pr-2.5 text-left transition-transform active:scale-[0.98]"
+        className="mood-trigger glass flex items-center gap-2 rounded-full py-1.5 pl-2 pr-2.5 text-left transition-transform active:scale-[0.98]"
         style={{ "--mood": active?.color ?? "#cbb894" } as CSSProperties}
       >
         <span className="mood-chip" aria-hidden="true">
@@ -175,7 +190,7 @@ export default function MoodPicker({
           >
             <div className="glass mood-panel animate-fade-swap">
               <div className="mood-head">
-                <span className="text-[8.5px] font-medium uppercase tracking-[0.24em] text-white/30">
+                <span className="text-[9px] font-medium uppercase tracking-[0.24em] text-white/30">
                   tonight&apos;s weather
                 </span>
                 <span className="tabnum text-[9px] tracking-[0.1em] text-white/30">
@@ -211,10 +226,10 @@ export default function MoodPicker({
                         onKeyDown={(e) => {
                           if (e.key === "ArrowDown") {
                             e.preventDefault();
-                            focusAt(i + 1);
+                            move(i, 1);
                           } else if (e.key === "ArrowUp") {
                             e.preventDefault();
-                            focusAt(i - 1);
+                            move(i, -1);
                           } else if (e.key === "Home") {
                             e.preventDefault();
                             focusAt(0);
@@ -256,7 +271,7 @@ export default function MoodPicker({
 
               <div className="mood-foot">
                 <span className="mood-foot-dot" aria-hidden="true" />
-                <span className="truncate text-[8.5px] uppercase tracking-[0.16em] text-white/35">
+                <span className="truncate text-[9px] uppercase tracking-[0.16em] text-white/35">
                   {peek?.tags?.length
                     ? peek.tags.slice(0, 3).join(" · ")
                     : "a mehfil for the quiet hours"}

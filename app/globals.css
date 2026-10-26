@@ -352,8 +352,8 @@ body {
   display: grid;
   place-items: center;
   flex: none;
-  height: 20px;
-  width: 20px;
+  height: 22px;
+  width: 22px;
   border-radius: 7px;
   color: var(--mood);
   background: color-mix(in srgb, var(--mood) 20%, transparent);
@@ -375,10 +375,15 @@ body {
   height: 24px;
 }
 .mood-chip .mood-motif {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   stroke-width: 2.4;
   opacity: 1;
+}
+
+.mood-trigger:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
 }
 .mood-row:hover .mood-motif,
 .mood-row[data-on="true"] .mood-motif {
