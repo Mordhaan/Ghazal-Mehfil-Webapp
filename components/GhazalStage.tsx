@@ -5,6 +5,7 @@ import { usePlayer, fmtTime } from "@/lib/usePlayer";
 import { usePresence } from "@/lib/usePresence";
 import { useGaplessAudio } from "@/lib/useGaplessAudio";
 import Lyrics from "@/components/Lyrics";
+import MoodPicker from "@/components/MoodPicker";
 import { useTimingIndex } from "@/lib/useTiming";
 import type { Catalog, ScriptMode } from "@/lib/types";
 
@@ -75,7 +76,6 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
   }, [onlySynced, p.playlist, timingKeys]);
 
   const [clock, setClock] = useState("");
-  const [showMoodMenu, setShowMoodMenu] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
   const [seekDrag, setSeekDrag] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -301,64 +301,7 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
               </svg>
             </button>
 
-            <div className="relative">
-              <button
-                onClick={() => setShowMoodMenu((v) => !v)}
-                aria-expanded={showMoodMenu}
-                aria-haspopup="listbox"
-                className="glass flex items-center gap-2 rounded-full py-1.5 pl-3 pr-2.5 text-left transition-transform active:scale-[0.98]"
-              >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: p.mood?.color }} />
-                <span className="max-w-[92px] truncate text-[11.5px] font-medium text-white/90 sm:max-w-none">
-                  {p.mood?.name}
-                </span>
-                <svg
-                  width="11"
-                  height="11"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  className={`text-white/45 transition-transform ${showMoodMenu ? "rotate-180" : ""}`}
-                >
-                  <path d="M6 9l6 6 6-6" strokeLinecap="round" />
-                </svg>
-              </button>
-
-              {showMoodMenu && (
-                <>
-                  <div className="fixed inset-0 z-20" onClick={() => setShowMoodMenu(false)} />
-                  <ul
-                    role="listbox"
-                    className="glass absolute right-0 z-30 mt-2 w-[260px] animate-fade-swap overflow-hidden rounded-2xl p-1.5"
-                  >
-                    {catalog.moods.map((m) => (
-                      <li key={m.id}>
-                        <button
-                          role="option"
-                          aria-selected={m.id === p.moodId}
-                          onClick={() => {
-                            p.selectMood(m.id);
-                            setShowMoodMenu(false);
-                          }}
-                          className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-white/10 ${
-                            m.id === p.moodId ? "bg-white/[0.09]" : ""
-                          }`}
-                        >
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: m.color }} />
-                          <span className="min-w-0">
-                            <span className="block truncate text-[12.5px] font-medium text-white/92">{m.name}</span>
-                            <span className="mt-0.5 block truncate text-[10.5px] leading-snug text-white/40">
-                              {m.vibe_description}
-                            </span>
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
+            <MoodPicker moods={catalog.moods} activeId={p.moodId} onSelect={p.selectMood} />
           </div>
         </header>
 
