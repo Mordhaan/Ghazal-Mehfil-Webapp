@@ -24,19 +24,14 @@ const SCRIPT_FIELD: Record<ScriptMode, "u" | "r" | "h"> = {
   hindi: "h",
 };
 
-function lineText(raw: string, script: ScriptMode): string[] {
+function lineText(raw: string): string[] {
   return raw
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean);
 }
 
-function buildTiming(
-  taps: Tap[],
-  lines: FlatLine[],
-  duration: number,
-  trackId: string
-): TrackTiming {
+function buildTiming(taps: Tap[], duration: number, trackId: string): TrackTiming {
   const sorted = [...taps].sort((a, b) => a.t - b.t);
   const windows = sorted.map((tap, k) => {
     const next = k + 1 < sorted.length ? sorted[k + 1].t : null;
@@ -169,7 +164,7 @@ export default function SyncStudio({ catalog }: { catalog: Catalog }) {
     const out: FlatLine[] = [];
     ghazal.shers.forEach((sher, si) => {
       const raw = sher[SCRIPT_FIELD[script]] || sher.u || sher.r || "";
-      lineText(raw, script).slice(0, 2).forEach((text, mi) => {
+      lineText(raw).slice(0, 2).forEach((text, mi) => {
         out.push({ sher: si, misra: mi, text });
       });
     });
@@ -294,8 +289,8 @@ export default function SyncStudio({ catalog }: { catalog: Catalog }) {
     if (!track || !audioRef.current) return null;
     const dur = audioRef.current.duration || duration || track.duration || 0;
     if (!taps.length || !dur) return null;
-    return buildTiming(taps, lines, dur, track.id);
-  }, [taps, lines, track, duration]);
+    return buildTiming(taps, dur, track.id);
+  }, [taps, track, duration]);
 
   const exportJson = useCallback(() => {
     const doc = build();
@@ -306,10 +301,15 @@ export default function SyncStudio({ catalog }: { catalog: Catalog }) {
     setPreview(doc);
     const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
+    const href = URL.createObjectURL(blob);
+    a.href = href;
     a.download = `${track!.id}.json`;
+    a.rel = "noopener";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(a.href);
+    a.remove();
+    // Revoking in the same tick can cancel the download in Safari.
+    window.setTimeout(() => URL.revokeObjectURL(href), 1000);
     say("exported — drop it in data/taps/");
   }, [build, say, track]);
 

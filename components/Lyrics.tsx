@@ -80,7 +80,7 @@ function Misra({
     return (
       <p
         dir={script === "urdu" ? "rtl" : "ltr"}
-        lang={script === "urdu" ? "ur" : script === "hindi" ? "hi" : "en"}
+        lang={script === "urdu" ? "ur" : script === "hindi" ? "hi" : "ur-Latn"}
         className={base}
         style={!dim ? { textShadow: "0 2px 24px rgba(0,0,0,0.8)" } : undefined}
       >
@@ -92,7 +92,7 @@ function Misra({
   return (
     <p
       dir={script === "urdu" ? "rtl" : "ltr"}
-      lang={script === "urdu" ? "ur" : script === "hindi" ? "hi" : "en"}
+      lang={script === "urdu" ? "ur" : script === "hindi" ? "hi" : "ur-Latn"}
       className={base}
       style={!dim ? { textShadow: "0 2px 24px rgba(0,0,0,0.8)" } : undefined}
     >
@@ -126,8 +126,8 @@ function Misra({
 function scriptText(sher: Sher | undefined, script: ScriptMode): string {
   if (!sher) return "";
   if (script === "urdu") return sher.u || sher.r || "";
-  if (script === "hindi") return sher.h || sher.r || "";
-  return sher.r || "";
+  if (script === "hindi") return sher.h || sher.r || sher.u || "";
+  return sher.r || sher.u || "";
 }
 
 function Couplet({

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayer, fmtTime } from "@/lib/usePlayer";
 import { usePresence } from "@/lib/usePresence";
 import { useGaplessAudio } from "@/lib/useGaplessAudio";
+import { useMediaSession } from "@/lib/useMediaSession";
+import { prefetchTiming } from "@/lib/useTiming";
 import Lyrics from "@/components/Lyrics";
 import MoodPicker from "@/components/MoodPicker";
-import { useTimingIndex } from "@/lib/useTiming";
 import type { Catalog, ScriptMode } from "@/lib/types";
 
 function pad(n: number) {
@@ -19,16 +20,16 @@ function initials(name: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+const SCRIPTS: ScriptMode[] = ["urdu", "roman", "hindi"];
+
 /** Thin progress strip showing real vocal spans, so you can see the interludes. */
 function VocalMap({
   vocals,
-  interludes,
   duration,
   time,
   onSeek,
 }: {
   vocals: [number, number][];
-  interludes: [number, number][];
   duration: number;
   time: number;
   onSeek: (t: number) => void;
@@ -67,26 +68,48 @@ function VocalMap({
 export default function GhazalStage({ catalog }: { catalog: Catalog }) {
   const p = usePlayer(catalog);
   const presence = usePresence();
-  const timingKeys = useTimingIndex();
-  const [onlySynced, setOnlySynced] = useState(false);
-
-  const queue = useMemo(() => {
-    if (!onlySynced) return p.playlist;
-    return p.playlist.filter((t) => timingKeys?.has(t.tkey ?? t.id));
-  }, [onlySynced, p.playlist, timingKeys]);
-
   const [clock, setClock] = useState("");
   const [showQueue, setShowQueue] = useState(false);
   const [seekDrag, setSeekDrag] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
   const seekRef = useRef<HTMLDivElement | null>(null);
+  const queueButtonRef = useRef<HTMLButtonElement | null>(null);
+  const queueCloseRef = useRef<HTMLButtonElement | null>(null);
+  const queuePanelRef = useRef<HTMLElement | null>(null);
+  const toastTimer = useRef<number | null>(null);
+
+  // The global key handler is bound once. Re-binding it on every timeupdate
+  // (the player re-renders ~4x/second) is how a keypress ends up handled twice.
+  const pRef = useRef(p);
+  pRef.current = p;
+  const queueOpenRef = useRef(showQueue);
+  queueOpenRef.current = showQueue;
+
+  const showToast = useCallback((message: string, ms = 1800) => {
+    setToast(message);
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), ms);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    },
+    []
+  );
 
   /** The recording the queue will play after this one (the queue loops). */
   const nextTrack = useMemo(() => {
     if (!p.track || p.playlist.length < 2) return null;
-    const i = p.playlist.findIndex((t) => t.id === p.track!.id);
+    const i = p.playlist.findIndex((t) => t.id === p.track?.id);
     return i >= 0 ? p.playlist[(i + 1) % p.playlist.length] : null;
   }, [p.playlist, p.track]);
+
+  // Fetch the next timeline while this one is still singing.
+  useEffect(() => {
+    prefetchTiming(nextTrack?.tkey ?? nextTrack?.id);
+  }, [nextTrack]);
 
   // Two decks: one audible, one already buffering the next recording. The
   // hand-off at track end is a ref swap, not a network request, so the mehfil
@@ -105,13 +128,11 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
     onEnded: p.next,
     onError: () => {
       p.setErrorMsg("Stream unavailable — skipping");
-      setToast("That recording would not load. Finding another…");
-      setTimeout(() => setToast(null), 2800);
-      setTimeout(() => p.next(), 1200);
+      showToast("That recording would not load. Finding another…", 2800);
+      window.setTimeout(() => p.next(), 1200);
     },
     onBlocked: () => {
-      setToast("Tap play to start the mehfil");
-      setTimeout(() => setToast(null), 3000);
+      showToast("Tap play to start the mehfil", 3000);
     },
   });
 
@@ -139,23 +160,44 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
     }
   }, []);
 
-  const seekTo = (t: number) => {
-    const el = audioRef.current;
-    if (!el) return;
-    const total = p.duration || 0;
-    if (!total) return;
-    const clamped = Math.min(total, Math.max(0, t));
-    el.currentTime = clamped;
-    p.setCurrentTime(clamped);
-  };
+  const mediaDuration = p.duration;
+  const setAudioTime = p.setCurrentTime;
+  const seekTo = useCallback(
+    (t: number) => {
+      const el = audioRef.current;
+      if (!el) return;
+      const total = mediaDuration || el.duration || 0;
+      const clamped = total ? Math.min(total, Math.max(0, t)) : Math.max(0, t);
+      el.currentTime = clamped;
+      setAudioTime(clamped);
+    },
+    [audioRef, mediaDuration, setAudioTime]
+  );
 
-  const seekFromClientX = (clientX: number) => {
-    const bar = seekRef.current;
-    if (!bar) return;
-    const rect = bar.getBoundingClientRect();
-    const total = p.duration || 0;
-    seekTo(((clientX - rect.left) / rect.width) * total);
-  };
+  useMediaSession({
+    title: p.track?.title ?? "",
+    artist: p.track?.artist ?? "",
+    album: p.mood?.name,
+    playing: p.isPlaying,
+    duration: p.duration || p.track?.duration || 0,
+    position: p.currentTime,
+    onPlay: p.play,
+    onPause: p.pause,
+    onNext: p.next,
+    onPrev: p.prev,
+    onSeek: seekTo,
+  });
+
+  const seekFromClientX = useCallback(
+    (clientX: number) => {
+      const bar = seekRef.current;
+      if (!bar) return;
+      const rect = bar.getBoundingClientRect();
+      const total = mediaDuration || 0;
+      seekTo(((clientX - rect.left) / rect.width) * total);
+    },
+    [mediaDuration, seekTo]
+  );
 
   useEffect(() => {
     if (!seekDrag) return;
@@ -167,46 +209,85 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seekDrag, p.duration]);
+  }, [seekDrag, seekFromClientX]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
-      if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
-      if (el?.isContentEditable) return;
+      if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)) return;
+      if (queueOpenRef.current) return; // the dialog owns keys while it is open
+
+      const player = pRef.current;
+      if (!player.track) return;
+
       if (e.code === "Space") {
         e.preventDefault();
-        p.toggle();
+        player.toggle();
       } else if (e.code === "ArrowRight") {
         e.preventDefault();
-        if (e.shiftKey) p.next();
+        if (e.shiftKey) player.next();
         else if (audioRef.current) audioRef.current.currentTime += 10;
       } else if (e.code === "ArrowLeft") {
         e.preventDefault();
-        if (e.shiftKey) p.prev();
+        if (e.shiftKey) player.prev();
         else if (audioRef.current) audioRef.current.currentTime -= 10;
       } else if (e.key.toLowerCase() === "m") {
-        p.setMuted((m) => !m);
+        player.setMuted((m) => !m);
       } else if (e.key === "[" || e.key === "]") {
         // Human calibration: shift the lyric clock by 50 ms per press.
         // Persisted per recording, so a fixed offset only has to be found once.
         e.preventDefault();
         const step = e.key === "]" ? 0.05 : -0.05;
-        p.nudgeOffset(step);
-        const ms = Math.round((p.offset + step) * 1000);
-        setToast(`sync ${ms >= 0 ? "+" : ""}${ms} ms`);
-        setTimeout(() => setToast(null), 1200);
+        player.nudgeOffset(step);
+        const ms = Math.round((player.offset + step) * 1000);
+        showToast(`sync ${ms >= 0 ? "+" : ""}${ms} ms`, 1200);
       } else if (e.key === "\\") {
         e.preventDefault();
-        p.nudgeOffset(-p.offset);
-        setToast("sync reset");
-        setTimeout(() => setToast(null), 1200);
+        player.nudgeOffset(-player.offset);
+        showToast("sync reset", 1200);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [p]);
+  }, [audioRef, showToast]);
+
+  // While the playlist drawer is open it behaves like a dialog: initial focus,
+  // Escape to close, Tab kept inside, and focus returned to the trigger.
+  useEffect(() => {
+    if (!showQueue) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    queueCloseRef.current?.focus({ preventScroll: true });
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowQueue(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const panel = queuePanelRef.current;
+      if (!panel) return;
+      const nodes = panel.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!nodes.length) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      previous?.focus({ preventScroll: true });
+    };
+  }, [showQueue]);
 
   const timing = p.timing;
   const progress = p.duration > 0 ? (p.currentTime / p.duration) * 100 : 0;
@@ -227,16 +308,47 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
       script={p.script}
       offset={p.offset}
     />
-  ) : null;
+  ) : (
+    <div className="animate-fade-swap px-6 text-center">
+      <p className="roman text-[clamp(1.2rem,3.6vw,2rem)] text-white/85">
+        Nothing timed here yet
+      </p>
+      <p className="mx-auto mt-3 max-w-sm text-[12.5px] leading-relaxed text-white/40">
+        {p.onlyTimed
+          ? `None of the ${p.moodTotal} recordings in ${p.mood?.name ?? "this mood"} has a measured timing.`
+          : "There are no recordings in this mood."}
+      </p>
+      {p.onlyTimed && (
+        <button
+          type="button"
+          onClick={() => p.setOnlyTimed(false)}
+          className="mt-6 rounded-full border border-white/18 px-4 py-2 text-[12px] text-white/75 transition-colors hover:bg-white/10"
+        >
+          Show all recordings
+        </button>
+      )}
+    </div>
+  );
 
   return (
-    <div className="stage" style={moodStyle} data-ts={p.timingState} data-tn={p.timing?.shers.length ?? -1}>
+    <div
+      className="stage"
+      style={moodStyle}
+      data-ts={p.timingState}
+      data-tn={p.timing?.shers.length ?? -1}
+    >
       <div className="vignette" />
       <div className="grain" />
+
+      <h1 className="sr-only">Ghazal — a mehfil for the quiet hours</h1>
 
       {slotRefs.map((ref, i) => (
         <audio key={i} ref={ref} preload="auto" />
       ))}
+
+      <p className="sr-only" aria-live="polite">
+        {p.track ? `Now playing ${p.track.title} by ${p.track.artist}` : ""}
+      </p>
 
       <div className="relative z-10 flex h-[100dvh] w-full flex-col">
         <header className="flex shrink-0 items-start justify-between gap-3 px-4 pt-4 sm:px-7 sm:pt-6">
@@ -248,6 +360,12 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
 
           <div
             className="glass flex items-center gap-2 rounded-full px-3 py-1.5"
+            role="status"
+            aria-label={
+              presence.state === "live"
+                ? `${presence.count} listeners in the mehfil`
+                : "Reconnecting to the mehfil"
+            }
             title={
               presence.state === "live"
                 ? "Live listeners connected right now"
@@ -266,7 +384,7 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
                 }`}
               />
             </span>
-            <span className="tabnum text-[11.5px] font-medium text-white/85">
+            <span className="tabnum text-[11.5px] font-medium text-white/85 max-[380px]:hidden">
               {presence.state === "live"
                 ? `${presence.count} in the mehfil`
                 : presence.state === "connecting"
@@ -277,7 +395,7 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
 
           <div className="flex items-center gap-2">
             <div className="glass-soft hidden items-center gap-0.5 rounded-full p-0.5 sm:flex">
-              {(["urdu", "roman", "hindi"] as ScriptMode[]).map((s) => (
+              {SCRIPTS.map((s) => (
                 <button
                   key={s}
                   onClick={() => p.setScript(s)}
@@ -292,8 +410,11 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
             </div>
 
             <button
+              ref={queueButtonRef}
               onClick={() => setShowQueue((v) => !v)}
               aria-label="Show playlist"
+              aria-expanded={showQueue}
+              aria-controls="playlist-dialog"
               className="glass btn-round h-9 w-9 text-white/75 hover:text-white"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -309,7 +430,7 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
           <div className="w-full max-w-3xl text-center">{centre}</div>
         </main>
 
-        <footer className="shrink-0 px-3 pb-4 sm:px-6 sm:pb-6">
+        <footer className="safe-bottom shrink-0 px-3 pb-4 sm:px-6 sm:pb-6">
           <div className="mx-auto w-full max-w-3xl">
             <div className="glass flex flex-col gap-3 rounded-[28px] p-3 lg:flex-row lg:items-center lg:gap-4 lg:rounded-full lg:py-2.5 lg:pl-2.5 lg:pr-6">
               <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -354,7 +475,8 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
                 <button
                   onClick={() => p.setMuted((m) => !m)}
                   aria-label={p.muted ? "Unmute" : "Mute"}
-                  className="btn-round ml-1 hidden h-9 w-9 text-white/55 hover:bg-white/10 hover:text-white sm:grid"
+                  aria-pressed={p.muted}
+                  className="btn-round ml-1 grid h-9 w-9 text-white/55 hover:bg-white/10 hover:text-white"
                 >
                   {p.muted ? (
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -384,14 +506,18 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
                     aria-valuemin={0}
                     aria-valuemax={Math.round(p.duration)}
                     aria-valuenow={Math.round(p.currentTime)}
+                    aria-valuetext={fmtTime(p.currentTime)}
                     onPointerDown={(e) => {
                       setSeekDrag(true);
                       seekFromClientX(e.clientX);
                     }}
                     onKeyDown={(e) => {
                       if (!audioRef.current) return;
-                      if (e.key === "ArrowRight") audioRef.current.currentTime += 5;
-                      if (e.key === "ArrowLeft") audioRef.current.currentTime -= 5;
+                      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                        e.preventDefault();
+                        const step = e.key === "ArrowRight" ? 5 : -5;
+                        seekTo((audioRef.current.currentTime || 0) + step);
+                      }
                     }}
                   >
                     <div className="seek-track w-full">
@@ -404,15 +530,14 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
                   </span>
                 </div>
 
-                {timing && (timing.phrases?.length || timing.vocals?.length) && (
+                {timing && (timing.phrases?.length || timing.vocals?.length) ? (
                   <VocalMap
-                    vocals={(timing.phrases?.length ? timing.phrases : timing.vocals) ?? []}
-                    interludes={timing.interludes ?? []}
+                    vocals={timing.phrases?.length ? timing.phrases : timing.vocals ?? []}
                     duration={p.duration || timing.duration}
                     time={p.currentTime}
                     onSeek={seekTo}
                   />
-                )}
+                ) : null}
               </div>
             </div>
 
@@ -427,38 +552,77 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
       {showQueue && (
         <div className="fixed inset-0 z-40 flex justify-end">
           <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" onClick={() => setShowQueue(false)} />
-          <aside className="glass relative flex h-full w-[86vw] max-w-[380px] animate-fade-swap flex-col rounded-l-3xl p-4">
+          <aside
+            ref={queuePanelRef}
+            id="playlist-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="queue-title"
+            className="glass relative flex h-full w-[86vw] max-w-[380px] animate-fade-swap flex-col rounded-l-3xl p-4"
+          >
             <div className="mb-3 flex items-start justify-between">
               <div>
-                <p className="text-[13px] font-semibold text-white/90">{p.mood?.name}</p>
+                <p id="queue-title" className="text-[13px] font-semibold text-white/90">
+                  {p.mood?.name}
+                </p>
                 <p className="mt-0.5 text-[10.5px] text-white/40">
-                  {queue.length} recordings{onlySynced ? " with lyrics" : ""}
+                  {p.playlist.length} of {p.moodTotal} recordings
+                  {p.onlyTimed ? " · timed" : ""}
                 </p>
                 <button
-                  onClick={() => setOnlySynced((v) => !v)}
-                  className={`mt-1.5 rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] transition-colors ${
-                    onlySynced
+                  onClick={() => p.setOnlyTimed(!p.onlyTimed)}
+                  aria-pressed={p.onlyTimed}
+                  disabled={!p.timingIndexReady || (p.timedCount === 0 && !p.onlyTimed)}
+                  className={`mt-1.5 rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] transition-colors disabled:opacity-45 ${
+                    p.onlyTimed
                       ? "border-[#cbb894]/45 text-[#cbb894]"
                       : "border-white/12 text-white/35 hover:text-white/60"
                   }`}
                 >
-                  {onlySynced ? "showing timed" : "timed only"}
+                  {!p.timingIndexReady
+                    ? "checking timings…"
+                    : p.timedCount === 0
+                    ? "no timed recordings"
+                    : p.onlyTimed
+                    ? `showing ${p.timedCount} timed`
+                    : `timed only · ${p.timedCount}`}
                 </button>
               </div>
-              <button onClick={() => setShowQueue(false)} aria-label="Close playlist" className="btn-round h-8 w-8 text-white/50 hover:bg-white/10 hover:text-white">
+              <button
+                ref={queueCloseRef}
+                onClick={() => setShowQueue(false)}
+                aria-label="Close playlist"
+                className="btn-round h-8 w-8 text-white/50 hover:bg-white/10 hover:text-white"
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" /></svg>
               </button>
             </div>
+
+            <div className="mb-3 flex items-center gap-0.5 rounded-full border border-white/10 p-0.5 sm:hidden">
+              {SCRIPTS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => p.setScript(s)}
+                  aria-pressed={p.script === s}
+                  className={`flex-1 rounded-full px-2.5 py-1 text-[10.5px] font-medium capitalize transition-colors ${
+                    p.script === s ? "bg-white/85 text-black" : "text-white/55 hover:text-white/85"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+
             <ul className="thin-scroll -mx-1 flex-1 overflow-y-auto px-1">
-              {queue.length === 0 && (
+              {p.playlist.length === 0 && (
                 <li className="px-2 py-6 text-[11px] leading-relaxed text-white/30">
                   No timed recordings in this mood yet. Turn the filter off, or open
                   /sync to time one.
                 </li>
               )}
-              {queue.map((t, i) => {
+              {p.playlist.map((t, i) => {
                 const active = t.id === p.track?.id;
-                const hasTiming = timingKeys?.has(t.tkey ?? t.id) ?? false;
+                const hasTiming = p.timingKeys?.has(t.tkey ?? t.id) ?? false;
                 return (
                   <li key={t.id}>
                     <button
@@ -485,7 +649,9 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
                         </span>
                         <span className="block truncate text-[10px] text-white/35">{t.artist}</span>
                       </span>
-                      <span className="tabnum shrink-0 text-[10px] text-white/28">{fmtTime(t.duration)}</span>
+                      <span className="tabnum shrink-0 text-[10px] text-white/28">
+                        {t.duration ? fmtTime(t.duration) : "—"}
+                      </span>
                     </button>
                   </li>
                 );
@@ -496,7 +662,11 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
       )}
 
       {toast && (
-        <div className="pointer-events-none fixed bottom-28 left-1/2 z-50 -translate-x-1/2 rounded-full bg-black/70 px-3.5 py-1.5 text-[11px] text-white/85 backdrop-blur-md">
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed bottom-28 left-1/2 z-50 -translate-x-1/2 rounded-full bg-black/70 px-3.5 py-1.5 text-[11px] text-white/85 backdrop-blur-md"
+        >
           {toast}
         </div>
       )}
