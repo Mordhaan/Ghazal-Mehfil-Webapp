@@ -85,19 +85,12 @@ export async function GET(req: NextRequest): Promise<Response> {
   let closed = false;
   let hb: ReturnType<typeof setInterval> | null = null;
 
-  // Lets the client tell the server it is still alive between pushes.
-  const touch = (streamId: string) => {
-    const l = listeners.get(streamId);
-    if (l) l.lastSeen = Date.now();
-  };
-  touch /* referenced below in POST */
-
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       listeners.set(id, { id, controller, lastSeen: Date.now() });
 
       try {
-        controller.enqueue(encoder.encode("retry: 2000\n\n"));
+        controller.enqueue(encoder.encode("retry: 3000\n\n"));
         controller.enqueue(frame(id));
       } catch {
         listeners.delete(id);
@@ -164,5 +157,8 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
   const l = id ? listeners.get(id) : undefined;
   if (l) l.lastSeen = Date.now();
-  return Response.json({ ok: Boolean(l), count: listeners.size });
+  return Response.json(
+    { ok: Boolean(l), count: listeners.size },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
