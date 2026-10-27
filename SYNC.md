@@ -166,8 +166,11 @@ score is low), not to pretend it is zero.
 
 ## Verification
 
-- `node --test lib/timing.test.ts` — lookup/normalisation invariants.
-- `npm run typecheck` and `npm run build`.
+- `npm test` — lookup/normalisation invariants plus catalogue projection and
+  queue-filter tests.
+- `npm run verify:data` — the catalogue, media keys, poem references and every
+  published timing file are cross-checked before a build.
+- `npm run typecheck`, `npm run lint` and `npm run build` (or `npm run check`).
 - `python scraper/align/check.py` — every published file is re-read and checked
   for out-of-range `i`, overlaps, backwards passes, line windows outside their
   occurrence, and word spans out of order.
@@ -183,7 +186,14 @@ score is low), not to pretend it is zero.
   re-render the player.
 - `lib/timing.ts` does binary searches for occurrence → misra → word.
 - `[` and `]` nudge the lyric clock by 50 ms for the current recording and
-  persist it in `localStorage`; `\` resets. This absorbs output latency and any
+  persist it in `localStorage`; `\` resets.
+- The timed-only toggle in the playlist drawer rebuilds the transport queue, so
+  prev/next and the gapless preloader stay inside measured recordings.
+- Media Session publishes the recording to the lock screen and maps headphone
+  play/pause/next onto the same transport.
+- `/timings/index.json` is revalidated on each visit; a per-track file is cached
+  for a day, and the next recording's timeline is prefetched while the current
+  one plays. This absorbs output latency and any
   constant offset the aligner missed.
 - During an interlude the last couplet stays on screen at reduced opacity, the
   next couplet is previewed faintly, and a progress hairline shows the gap. The

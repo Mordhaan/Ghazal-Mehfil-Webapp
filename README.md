@@ -32,6 +32,9 @@ npm run start
 
 No API keys, no accounts, no paid services.
 
+`npm run check` runs the release gate: data integrity, types, lint, unit
+tests and a production build.
+
 ---
 
 ## What actually works
@@ -44,9 +47,12 @@ No API keys, no accounts, no paid services.
 | Live listener count | ✅ | Real SSE connection count — not a fake number (see below) |
 | Spinning vinyl, seek bar, keyboard shortcuts | ✅ | Single shared `<audio>` element |
 | Persisted mood / script / volume | ✅ | `localStorage` |
-| Auto-skip on broken stream | ✅ | `onError` → toast → next track |
+| Auto-skip on broken stream | ✅ | Retries once, then toast → next track |
 | Measured lyric timings | ✅ | Per-recording word/line spans; see [`SYNC.md`](./SYNC.md) |
 | Tap-sync studio | ✅ | `/sync` — human-locked timing for any recording |
+| Timed-only queue | ✅ | The filter rebuilds the transport queue, not just the drawer |
+| Lock-screen controls | ✅ | Media Session metadata and headphone play/pause/next |
+| Home-screen shell | ✅ | Web manifest, maskable icons, safe-area layout, self-hosted fonts |
 
 ### Lyrics are measured, not guessed
 
@@ -84,6 +90,35 @@ when the second joined.
 > long-running Node host (or use a Redis-backed counter) if you go serverless.
 
 ---
+
+## Production
+
+- **Node 20.9+** (declared in `engines`).
+- **Set `NEXT_PUBLIC_SITE_URL`** (for example `https://ghazal.example`) so the
+  canonical URL, Open Graph tags, `robots.txt` and `sitemap.xml` do not fall
+  back to `localhost`.
+- **Presence needs one long-lived Node process.** The SSE counter lives in
+  process memory. A multi-instance deploy needs a shared store (Redis) or a
+  sticky single instance; the API reports the truth for the process it hits.
+- **Health check:** `GET /api/health` returns the build version, catalogue
+  counts and timing-manifest timestamp without touching archive.org.
+- **Caching:** `/timings/<tkey>.json` is served `max-age=86400` with
+  stale-while-revalidate; `/timings/index.json` is always revalidated. Security
+  headers (CSP, HSTS, nosniff, frame deny, permissions policy) live in
+  `next.config.js`.
+- **Fonts are self-hosted** at build time (`next/font`), so first paint does not
+  wait on Google Fonts and works on networks where it is blocked.
+- **Data gate:** `npm run verify:data` (also runs automatically before `build`)
+  rejects a catalogue whose ids, media keys, poem references or timing files do
+  not line up.
+
+### Security notes
+
+See [SECURITY.md](./SECURITY.md). `npm audit --omit=dev` flags advisories in
+Next 14's image-optimizer/RSC paths and its build-time PostCSS; this app does
+not use `next/image` or rewrites, and CSS is compiled during the build. The
+residual request-level DoS surface belongs at the reverse proxy (rate and body
+limits). A Next 16 upgrade is the upstream fix and a separate, major change.
 
 ## Data sources
 
@@ -145,6 +180,10 @@ app/
   layout.tsx               fonts, metadata, viewport
   globals.css              atmosphere, glass, nastaliq, vinyl, seek bar
   api/presence/route.ts    real SSE presence counter
+  api/health/route.ts      liveness + catalogue freshness
+  error.tsx                render-error boundary
+  not-found.tsx            404 page
+  robots.ts / sitemap.ts / manifest.ts
 components/
   GhazalStage.tsx          the whole single-screen experience
   Lyrics.tsx               rAF-driven couplet + word highlight + interlude state
@@ -153,11 +192,15 @@ lib/
   useTiming.ts             per-recording timing fetch + cache
   useAudioClock.ts         animation-frame audio clock
   timing.ts                v3 timing model, normalisation, binary-search lookups
+  useMediaSession.ts       lock-screen metadata + hardware transport keys
+  catalog.ts               server-side catalogue projection for the client
+  queue.ts                 timed-filter and queue-index maths (unit-tested)
   usePresence.ts           SSE client with backoff and honest state
   types.ts                 shared types
 public/
   timings/<tkey>.json      measured timing for one recording (URL key)
   timings/index.json       availability + quality manifest
+  icon-192.png … og.png    install icons and social card
 data/
   moods.json               the 5 moods
   ghazals.json             877 ghazals × tri-script couplets
@@ -165,6 +208,8 @@ data/
   timings.json             legacy phrase timings (migrated by export_timings.py)
   tracks.raw.jsonl         raw harvest (gitignored, ~42 MB)
   taps/                    tap-sync exports awaiting import
+scripts/
+  verify-data.mjs          pre-build integrity gate
 scraper/
   align/                   ASR → windowed alignment → v3 timings
   align_cli.py             entry point (works with PYTHONSAFEPATH)
@@ -209,4 +254,4 @@ the player. Everything else is noise.
   share of tracks show `Various Artists` because the original upload did not
   name the performer.
 - **Audio availability is not guaranteed.** Internet Archive occasionally
-  returns 500 for an individual item. The player detects this and skips.
+  returns 500 for an individual item. The player retries once and then skips.
