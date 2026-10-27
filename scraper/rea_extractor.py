@@ -13,7 +13,7 @@ import re
 import os
 from typing import Dict, List, Any
 
-# Standard Schema for the "Ghazal for Gen Z" Database
+# Standard Schema for the Ghazal Database
 def create_ghazal_schema(
     ghazal_id: str,
     title_roman: str,
@@ -72,7 +72,7 @@ SAMPLE_REKHTA_API_PAYLOAD = {
     ]
 }
 
-def transform_rekhta_to_genz_format(payload: Dict[str, Any], mood: str) -> Dict[str, Any]:
+def transform_rekhta_to_catalog_format(payload: Dict[str, Any], mood: str) -> Dict[str, Any]:
     shers = []
     for idx, c in enumerate(payload.get("Couplets", [])):
         sher_obj = {
@@ -101,5 +101,5 @@ def transform_rekhta_to_genz_format(payload: Dict[str, Any], mood: str) -> Dict[
     )
 
 if __name__ == "__main__":
-    result = transform_rekhta_to_genz_format(SAMPLE_REKHTA_API_PAYLOAD, "rebellious-philosophical")
+    result = transform_rekhta_to_catalog_format(SAMPLE_REKHTA_API_PAYLOAD, "rebellious-philosophical")
     print(json.dumps(result, indent=2, ensure_ascii=False))

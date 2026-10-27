@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-harvest_audio.py - Build the "Ghazal for Gen Z" listening library from Internet Archive.
+harvest_audio.py - Build the Ghazal listening library from Internet Archive.
 
 Internet Archive hosts freely-streamable ghazal recordings and its download
 endpoints send `Access-Control-Allow-Origin: *` with HTTP 206 range support,
@@ -250,7 +250,7 @@ def load_done() -> set[str]:
 
 
 def main() -> int:
-    print("Ghazal for Gen Z - audio harvester")
+    print("Ghazal - audio harvester")
     print("=" * 72)
 
     docs: dict[str, dict] = {}

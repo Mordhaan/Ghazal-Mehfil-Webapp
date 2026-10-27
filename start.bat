@@ -3,10 +3,10 @@ setlocal
 chcp 65001 >nul
 
 cd /d "%~dp0"
-title Ghazal for Gen Z
+title Minimal Ghazal
 
 echo ===================================================
-echo             Ghazal for Gen Z Launcher
+echo             Minimal Ghazal Launcher
 echo ===================================================
 echo.
 

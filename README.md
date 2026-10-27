@@ -1,4 +1,4 @@
-# 🌙 Ghazal for Gen Z
+# 🌙 Minimal Ghazal
 
 A single-screen, ambient web player for Urdu ghazals — built for people who
 discover this poetry at 3 AM, not in a syllabus.

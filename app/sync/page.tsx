@@ -5,7 +5,7 @@ import type { Catalog } from "@/lib/types";
 export const dynamic = "force-static";
 
 export const metadata = {
-  title: "Sync studio — Ghazal for Gen Z",
+  title: "Sync studio — Ghazal",
   robots: { index: false, follow: false },
 };
 

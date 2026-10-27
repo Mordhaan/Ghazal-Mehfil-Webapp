@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ghazal for Gen Z — a mehfil for the quiet hours",
+  title: "Ghazal — a mehfil for the quiet hours",
   description:
     "A single-screen ambient sanctuary for Urdu ghazals. Pick a mood, listen, and let the couplets find you.",
 };

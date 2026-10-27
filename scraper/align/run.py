@@ -124,7 +124,7 @@ def report(cat: dict, index: dict) -> None:
     tracks = cat.get("tracks", [])
     with_text = [t for t in tracks if t.get("ghazalId")]
     aligned = [t for t in with_text if key_of(t) in index["tracks"]]
-    print("Ghazal for Gen Z — lyric sync coverage")
+    print("Ghazal — lyric sync coverage")
     print("=" * 62)
     print(f"tracks                 {len(tracks):6d}")
     print(f"tracks with poetry     {len(with_text):6d}  ({len(with_text) / max(1, len(tracks)):.1%})")

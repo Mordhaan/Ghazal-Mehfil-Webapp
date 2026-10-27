@@ -251,7 +251,7 @@ def main() -> int:
     limit = int(sys.argv[-1]) if sys.argv[-1].isdigit() else MAX_PER_POET
     poets = [only] if only else POETS
 
-    say("Ghazal for Gen Z - Rekhta text harvester")
+    say("Ghazal - Rekhta text harvester")
     say("=" * 72)
 
     existing, done_ids = load_partial()
