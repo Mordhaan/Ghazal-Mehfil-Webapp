@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 export type AudioStatus = "idle" | "loading" | "ready" | "error";
 
@@ -66,8 +66,11 @@ export function useGaplessAudio(opts: Options) {
   const kickDeck = useRef<HTMLAudioElement | null>(null);
   const kickDelay = useRef<number | null>(null);
   const kickStop = useRef<number | null>(null);
+  /** One transparent retry per URL before we give up and skip the track. */
+  const retriedFor = useRef<string | null>(null);
+  const retryTimer = useRef<number | null>(null);
 
-  const clearKickTimers = () => {
+  const clearKickTimers = useCallback(() => {
     if (kickDelay.current !== null) {
       clearTimeout(kickDelay.current);
       kickDelay.current = null;
@@ -76,10 +79,17 @@ export function useGaplessAudio(opts: Options) {
       clearTimeout(kickStop.current);
       kickStop.current = null;
     }
-  };
+  }, []);
+
+  const clearRetryTimer = useCallback(() => {
+    if (retryTimer.current !== null) {
+      clearTimeout(retryTimer.current);
+      retryTimer.current = null;
+    }
+  }, []);
 
   /** End the nudge and put the deck back at the start, at the user's volume. */
-  const settle = (el: HTMLAudioElement) => {
+  const settle = useCallback((el: HTMLAudioElement) => {
     if (kickDeck.current !== el) return;
     clearKickTimers();
     kickDeck.current = null;
@@ -87,7 +97,7 @@ export function useGaplessAudio(opts: Options) {
     el.currentTime = 0;
     el.muted = latest.current.muted;
     el.volume = latest.current.muted ? 0 : latest.current.volume;
-  };
+  }, [clearKickTimers]);
 
   // Keep the newest callbacks visible to the native listeners without
   // re-binding them (re-binding mid-playback is how audio stutters).
@@ -142,6 +152,26 @@ export function useGaplessAudio(opts: Options) {
       };
       const onError = () => {
         if (!isActive()) return;
+        // A single 5xx from archive.org is a transient, not a dead recording.
+        // Reload once before telling the queue to skip; the retry is invisible
+        // unless it also fails.
+        const src = latest.current.src ?? "";
+        if (src && retriedFor.current !== src) {
+          retriedFor.current = src;
+          latest.current.onStatus?.("loading");
+          clearRetryTimer();
+          retryTimer.current = window.setTimeout(() => {
+            if (!isActive() || latest.current.src !== src) return;
+            el.load();
+            if (latest.current.playing) {
+              const pr = el.play();
+              if (pr && typeof pr.catch === "function") {
+                pr.catch(() => latest.current.onBlocked?.());
+              }
+            }
+          }, 700);
+          return;
+        }
         latest.current.onStatus?.("error");
         latest.current.onError?.();
       };
@@ -170,6 +200,7 @@ export function useGaplessAudio(opts: Options) {
     return () => {
       cleanups.forEach((fn) => fn());
       clearKickTimers();
+      clearRetryTimer();
       kickDeck.current = null;
       els.forEach((el) => {
         el.pause();
@@ -182,7 +213,7 @@ export function useGaplessAudio(opts: Options) {
       primed.current = [null, null];
       armed.current = false;
     };
-  }, []);
+  }, [clearKickTimers, clearRetryTimer]);
 
   // Promote a deck for the requested track: reuse the one that already holds
   // this URL, otherwise load it into the idle deck.
@@ -246,6 +277,7 @@ export function useGaplessAudio(opts: Options) {
     active.current = target;
     audioRef.current = el;
     current.current = src;
+    retriedFor.current = null;
     el.volume = latest.current.muted ? 0 : latest.current.volume;
     el.muted = latest.current.muted;
 
@@ -261,7 +293,7 @@ export function useGaplessAudio(opts: Options) {
         pr.catch(() => latest.current.onBlocked?.());
       }
     }
-  }, [opts.src]);
+  }, [opts.src, settle, clearKickTimers]);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -334,7 +366,7 @@ export function useGaplessAudio(opts: Options) {
     };
 
     kickDelay.current = window.setTimeout(tryKick, KICK_DELAY_MS);
-  }, [opts.src, opts.nextSrc, opts.playing]);
+  }, [opts.src, opts.nextSrc, opts.playing, settle, clearKickTimers]);
 
   useEffect(() => {
     for (const el of slots.current) {

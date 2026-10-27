@@ -25,6 +25,53 @@ function loadIndex(): Promise<TimingIndex | null> {
 }
 
 const cache = new Map<string, TrackTiming | null>();
+const inflight = new Map<string, Promise<TrackTiming | null>>();
+
+async function fetchTiming(trackId: string): Promise<TrackTiming | null> {
+  if (cache.has(trackId)) return cache.get(trackId) ?? null;
+
+  const index = await loadIndex();
+  // A failed manifest fetch is transient; do not negative-cache the track or a
+  // single bad network moment would hide its lyrics for the whole session.
+  if (!index) return null;
+  if (!index.tracks || !index.tracks[trackId]) {
+    cache.set(trackId, null);
+    return null;
+  }
+
+  try {
+    // The route sends a long-lived cache header for these immutable-ish files,
+    // so the browser can answer a repeat visit without a round trip.
+    const res = await fetch(`/timings/${encodeURIComponent(trackId)}.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const doc = normalizeTiming(await res.json(), trackId);
+    cache.set(trackId, doc);
+    return doc;
+  } catch (err) {
+    console.error("[timing] failed", trackId, err);
+    cache.set(trackId, null);
+    return null;
+  }
+}
+
+function getTiming(trackId: string): Promise<TrackTiming | null> {
+  if (cache.has(trackId)) return Promise.resolve(cache.get(trackId) ?? null);
+  const existing = inflight.get(trackId);
+  if (existing) return existing;
+  const request = fetchTiming(trackId).finally(() => inflight.delete(trackId));
+  inflight.set(trackId, request);
+  return request;
+}
+
+/**
+ * Warm the next recording's timeline while the current one plays. Gapless
+ * audio already fetches the next MP3; this removes the second wait that used
+ * to show `loading timings…` on every track change.
+ */
+export function prefetchTiming(trackId: string | undefined): void {
+  if (!trackId || cache.has(trackId)) return;
+  void getTiming(trackId);
+}
 
 export type TimingState = "idle" | "loading" | "ready" | "none";
 
@@ -47,14 +94,18 @@ export function useTimingIndex(): Set<string> | null {
 export function useTiming(trackId: string | undefined): {
   timing: TrackTiming | null;
   state: TimingState;
+  /** The id the current timing/state belongs to; guards against a stale frame. */
+  loadedFor: string | null;
 } {
   const [timing, setTiming] = useState<TrackTiming | null>(null);
   const [state, setState] = useState<TimingState>("idle");
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!trackId) {
       setTiming(null);
       setState("idle");
+      setLoadedFor(null);
       return;
     }
 
@@ -62,6 +113,7 @@ export function useTiming(trackId: string | undefined): {
       const hit = cache.get(trackId) ?? null;
       setTiming(hit);
       setState(hit ? "ready" : "none");
+      setLoadedFor(trackId);
       return;
     }
 
@@ -70,46 +122,26 @@ export function useTiming(trackId: string | undefined): {
     // next file is in flight.
     setTiming(null);
     setState("loading");
+    setLoadedFor(null);
 
-    (async () => {
-      const index = await loadIndex();
+    void getTiming(trackId).then((doc) => {
       if (dead) return;
-      if (!index?.tracks || !index.tracks[trackId]) {
-        cache.set(trackId, null);
-        setTiming(null);
-        setState("none");
-        return;
-      }
-
-      try {
-        const res = await fetch(`/timings/${encodeURIComponent(trackId)}.json`, {
-          cache: "no-cache",
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const doc = normalizeTiming(await res.json(), trackId);
-        cache.set(trackId, doc);
-        if (dead) return;
-        setTiming(doc);
-        setState(doc ? "ready" : "none");
-      } catch (err) {
-        console.error("[timing] failed", trackId, err);
-        cache.set(trackId, null);
-        if (dead) return;
-        setTiming(null);
-        setState("none");
-      }
-    })();
+      setTiming(doc);
+      setState(doc ? "ready" : "none");
+      setLoadedFor(trackId);
+    });
 
     return () => {
       dead = true;
     };
   }, [trackId]);
 
-  return { timing, state };
+  return { timing, state, loadedFor };
 }
 
 /** Test/debug helper: drop the in-memory cache. */
 export function clearTimingCache(): void {
   cache.clear();
+  inflight.clear();
   indexPromise = null;
 }
