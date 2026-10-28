@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlayer, fmtTime } from "@/lib/usePlayer";
 import { usePresence } from "@/lib/usePresence";
 import { useGaplessAudio } from "@/lib/useGaplessAudio";
@@ -21,6 +21,15 @@ function initials(name: string) {
 }
 
 const SCRIPTS: ScriptMode[] = ["urdu", "roman", "hindi"];
+
+/** The keyboard legend, kept in one place so the key handler and the bar agree. */
+const COMMANDS: { keys: string; action: string }[] = [
+  { keys: "space", action: "play" },
+  { keys: "← →", action: "seek" },
+  { keys: "shift ← →", action: "track" },
+  { keys: "[ ]", action: "sync" },
+  { keys: "m", action: "mute" },
+];
 
 /** Thin progress strip showing real vocal spans, so you can see the interludes. */
 function VocalMap({
@@ -70,6 +79,7 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
   const presence = usePresence();
   const [clock, setClock] = useState("");
   const [showQueue, setShowQueue] = useState(false);
+  const [showCmds, setShowCmds] = useState(false);
   const [seekDrag, setSeekDrag] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -245,6 +255,8 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
         e.preventDefault();
         player.nudgeOffset(-player.offset);
         showToast("sync reset", 1200);
+      } else if (e.key === "Escape") {
+        setShowCmds(false);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -541,9 +553,46 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
               </div>
             </div>
 
-            <div className="mt-2 hidden items-center justify-center gap-3 text-[9.5px] uppercase tracking-[0.2em] text-white/22 sm:flex">
-              <span>space play</span><span>·</span><span>← → seek</span><span>·</span>
-              <span>shift ← → track</span><span>·</span><span>[ ] sync</span><span>·</span><span>m mute</span>
+            <div className="mt-2 flex flex-col items-center">
+              <div
+                id="cmd-legend"
+                className="cmd-drawer w-full"
+                data-open={showCmds}
+                aria-hidden={!showCmds}
+              >
+                <div className="cmd-drawer-inner">
+                  <div className="cmd-legend glass-soft">
+                    {COMMANDS.map((c, i) => (
+                      <Fragment key={c.keys}>
+                        {i > 0 && (
+                          <span className="cmd-dot" aria-hidden>
+                            ·
+                          </span>
+                        )}
+                        <span className="cmd-hint">
+                          <span className="cmd-key">{c.keys}</span>
+                          <span>{c.action}</span>
+                        </span>
+                      </Fragment>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowCmds((v) => !v)}
+                aria-expanded={showCmds}
+                aria-controls="cmd-legend"
+                data-open={showCmds}
+                title={showCmds ? "Hide keyboard shortcuts" : "Show keyboard shortcuts"}
+                className="cmd-bar"
+              >
+                <span className="cmd-bar-grip" aria-hidden />
+                <span className="sr-only">
+                  {showCmds ? "Hide keyboard shortcuts" : "Show keyboard shortcuts"}
+                </span>
+              </button>
             </div>
           </div>
         </footer>

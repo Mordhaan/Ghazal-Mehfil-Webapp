@@ -448,6 +448,105 @@ body {
   }
 }
 
+/* ---------- command legend ---------- */
+/*
+  Shortcuts are opt-in. A short white bar sits alone under the player; press it
+  and the legend unfolds above, press it again and it folds away. Nothing about
+  the keys is printed on the stage until someone asks for it.
+*/
+.cmd-drawer {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+}
+.cmd-drawer[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.cmd-drawer-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cmd-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 9px;
+  margin-bottom: 11px;
+  padding: 8px 15px 7px;
+  border-radius: 9999px;
+  font-size: 9px;
+  line-height: 1.1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(244, 239, 231, 0.4);
+}
+.cmd-hint {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.cmd-key {
+  color: rgba(244, 239, 231, 0.78);
+}
+.cmd-dot {
+  color: rgba(244, 239, 231, 0.2);
+}
+
+.cmd-bar {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cmd-bar-grip {
+  display: block;
+  width: 52px;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(244, 239, 231, 0.8);
+  box-shadow: 0 1px 7px rgba(0, 0, 0, 0.5);
+  transition: width 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 200ms ease, box-shadow 240ms ease;
+}
+.cmd-bar:hover .cmd-bar-grip,
+.cmd-bar:focus-visible .cmd-bar-grip {
+  width: 64px;
+  background: #f4efe7;
+  box-shadow: 0 0 16px rgba(244, 239, 231, 0.3);
+}
+.cmd-bar[data-open="true"] .cmd-bar-grip {
+  width: 34px;
+  background: rgba(244, 239, 231, 0.45);
+  box-shadow: none;
+}
+.cmd-bar[data-open="true"]:hover .cmd-bar-grip,
+.cmd-bar[data-open="true"]:focus-visible .cmd-bar-grip {
+  width: 42px;
+  background: rgba(244, 239, 231, 0.7);
+}
+.cmd-bar:active .cmd-bar-grip {
+  width: 58px;
+}
+.cmd-bar[data-open="true"]:active .cmd-bar-grip {
+  width: 38px;
+}
+.cmd-bar:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
