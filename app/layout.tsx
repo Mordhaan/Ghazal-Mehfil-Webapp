@@ -1,34 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Noto_Nastaliq_Urdu, Noto_Serif_Devanagari } from "next/font/google";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, siteUrl } from "@/lib/site";
 import "./globals.css";
-
-/**
- * Fonts are downloaded at build time and served from this origin. The previous
- * `<link href="https://fonts.googleapis.com">` made every first paint wait on a
- * third party (and fail entirely on networks where Google Fonts is blocked).
- */
-const editorial = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
-  display: "swap",
-  variable: "--font-editorial",
-});
-
-const nastaliq = Noto_Nastaliq_Urdu({
-  subsets: ["arabic"],
-  weight: ["400"],
-  display: "swap",
-  variable: "--font-nastaliq",
-});
-
-const devanagari = Noto_Serif_Devanagari({
-  subsets: ["devanagari"],
-  weight: ["400"],
-  display: "swap",
-  variable: "--font-devanagari",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
@@ -96,14 +68,22 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Audio streams from archive.org; a handshake here removes a full RTT
-            from the first play. */}
+        {/* The original type system: Google-hosted Noto Nastaliq Urdu,
+            Cormorant Garamond and Noto Serif Devanagari. The CSS variables
+            below are intentionally left undefined, exactly as they were in the
+            early build, so body/Roman text falls back to Georgia and the
+            Nastaliq face is the named Google family. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://archive.org" />
         <link rel="dns-prefetch" href="https://archive.org" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font -- app/layout.tsx is global, not a single page */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Noto+Serif+Devanagari:wght@400&display=swap"
+          rel="stylesheet"
+        />
       </head>
-      <body className={`${editorial.variable} ${nastaliq.variable} ${devanagari.variable}`}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

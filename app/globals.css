@@ -110,7 +110,7 @@ body {
 }
 
 .hindi {
-  font-family: var(--font-devanagari), "Noto Serif Devanagari", var(--font-editorial), serif;
+  font-family: "Noto Serif Devanagari", var(--font-editorial), serif;
   line-height: 1.95;
 }
 

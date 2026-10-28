@@ -52,7 +52,7 @@ tests and a production build.
 | Tap-sync studio | ✅ | `/sync` — human-locked timing for any recording |
 | Timed-only queue | ✅ | The filter rebuilds the transport queue, not just the drawer |
 | Lock-screen controls | ✅ | Media Session metadata and headphone play/pause/next |
-| Home-screen shell | ✅ | Web manifest, maskable icons, safe-area layout, self-hosted fonts |
+| Home-screen shell | ✅ | Web manifest, maskable icons, safe-area layout |
 
 ### Lyrics are measured, not guessed
 
@@ -106,8 +106,10 @@ when the second joined.
   stale-while-revalidate; `/timings/index.json` is always revalidated. Security
   headers (CSP, HSTS, nosniff, frame deny, permissions policy) live in
   `next.config.js`.
-- **Fonts are self-hosted** at build time (`next/font`), so first paint does not
-  wait on Google Fonts and works on networks where it is blocked.
+- **Fonts follow the original design.** `Noto Nastaliq Urdu`, `Cormorant
+  Garamond` and `Noto Serif Devanagari` load from Google Fonts with
+  `display=swap`; the CSP allows only `fonts.googleapis.com` and
+  `fonts.gstatic.com` as extra origins.
 - **Data gate:** `npm run verify:data` (also runs automatically before `build`)
   rejects a catalogue whose ids, media keys, poem references or timing files do
   not line up.
