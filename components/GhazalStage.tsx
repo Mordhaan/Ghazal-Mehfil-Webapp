@@ -20,7 +20,7 @@ function initials(name: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-const SCRIPTS: ScriptMode[] = ["urdu", "roman", "hindi"];
+const SCRIPTS: ScriptMode[] = ["roman", "urdu", "hindi"];
 
 /** The keyboard legend, kept in one place so the key handler and the bar agree. */
 const COMMANDS: { keys: string; action: string }[] = [
