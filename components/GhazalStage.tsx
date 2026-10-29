@@ -363,7 +363,7 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
       </p>
 
       <div className="relative z-10 flex h-[100dvh] w-full flex-col">
-        <header className="flex shrink-0 items-start justify-between gap-3 px-4 pt-4 sm:px-7 sm:pt-6">
+        <header className="relative flex shrink-0 items-start justify-between gap-3 px-4 pt-4 sm:px-7 sm:pt-6">
           <div className="glass-soft hidden items-center gap-2 rounded-full px-3.5 py-1.5 sm:flex">
             <span className="text-[10px] uppercase tracking-[0.22em] text-white/45">{timezone}</span>
             <span className="h-1 w-1 rounded-full bg-white/25" />
@@ -371,7 +371,7 @@ export default function GhazalStage({ catalog }: { catalog: Catalog }) {
           </div>
 
           <div
-            className="glass flex items-center gap-2 rounded-full px-3 py-1.5"
+            className="glass absolute left-1/2 top-4 -translate-x-1/2 sm:top-6 flex items-center gap-2 rounded-full px-3 py-1.5"
             role="status"
             aria-label={
               presence.state === "live"
